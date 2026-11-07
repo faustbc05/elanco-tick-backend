@@ -5,10 +5,19 @@ from database import (
     get_region_counts,
     get_weekly_trends,
     get_monthly_trends,
+    initialise_database,
 )
 from datetime import date
+from contextlib import asynccontextmanager
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    initialise_database()
+    yield
+
+
+app = FastAPI(lifespan=lifespan)
 
 
 @app.get("/health")
