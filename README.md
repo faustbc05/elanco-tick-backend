@@ -70,4 +70,80 @@ The database is created automatically if it does not already exist. Repeated syn
 
 Launch the development server using Uvicorn:
 
-`.\.venv
+`.\.venv\Scripts\python.exe -m uvicorn main:app --reload`
+
+The API will be available at `http://127.0.0.1:8000`.
+
+To view and interact with the automatically generated API documentation, open:
+
+[FastAPI Interactive Documentation](http://127.0.0.1:8000/docs)
+
+The server runs continuously until stopped with `Ctrl + C`.
+
+### 6. Run Automated Tests
+
+Open a separate terminal, or stop Uvicorn, and execute:
+
+`.\.venv\Scripts\python.exe -m pytest -v`
+
+The tests cover application initialisation, request validation, analytics calculations, anomaly detection and database reliability. Temporary databases and mocked API responses are used to avoid modifying the application's stored sightings.
+
+## API Endpoints
+
+| Method | Endpoint                        | Description                                                            |
+| ------ | ------------------------------- | ---------------------------------------------------------------------- |
+| GET    | `/health`                       | Returns the application health status                                  |
+| GET    | `/sightings`                    | Retrieves sightings with pagination and optional filters               |
+| GET    | `/analytics/locations`          | Returns sighting counts grouped by location                            |
+| GET    | `/analytics/regions`            | Returns counts grouped by mapped UK region                             |
+| GET    | `/analytics/trends/weekly`      | Returns sightings grouped by Monday-starting week                      |
+| GET    | `/analytics/trends/monthly`     | Returns sightings grouped by calendar month                            |
+| GET    | `/analytics/insights/anomalies` | Returns unusual monthly sighting counts identified by Isolation Forest |
+
+### Sighting Filters
+
+The `/sightings` endpoint accepts the following optional query parameters:
+
+| Parameter    | Default | Description                                     |
+| ------------ | ------- | ----------------------------------------------- |
+| `limit`      | 50      | Number of sightings returned, between 1 and 100 |
+| `offset`     | 0       | Number of matching records skipped              |
+| `location`   | None    | Exact location name                             |
+| `start_date` | None    | Inclusive date filter in YYYY-MM-DD format      |
+| `end_date`   | None    | Inclusive date filter in YYYY-MM-DD format      |
+
+Example requests:
+
+`GET /sightings?location=London&limit=10&offset=10`
+
+Returns up to ten London sightings after skipping the first ten matching results.
+
+`GET /sightings?start_date=2024-01-01&end_date=2024-02-10`
+
+Returns up to 50 sightings recorded within the specified date range, inclusive.
+
+`GET /sightings?location=London&start_date=2024-01-01&end_date=2024-02-10&limit=10&offset=10`
+
+Combines location filtering, date filtering and pagination.
+
+Invalid limits, negative offsets and reversed date ranges return HTTP 422.
+
+Interactive API documentation is available at `/docs` when the server is running.
+
+### Machine Learning Insights
+
+`GET /analytics/insights/anomalies` uses an Isolation Forest model to identify months with unusually high or low historical sighting counts. It requires at least 12 recorded monthly observations and returns the month and count for each flagged observation. Results are exploratory and are not predictions of tick prevalence or disease risk.
+
+## Limitations and Future Improvements
+
+**Geographic coverage:** Region reporting currently relies on a predefined mapping of location names to UK regions. Locations not included in the mapping are classified as `Unknown`. A future implementation could use more comprehensive geographic reference data.
+
+**Scalability:** SQLite is appropriate for this self-contained MVP, but increased data volumes or concurrent usage may benefit from additional database indexes, query optimisation and migration to a server-based database such as PostgreSQL.
+
+**Data availability:** Sightings are synchronised from an external API rather than continuously streamed. New sightings are only available locally following a successful synchronisation.
+
+**Interpretation:** Historical sighting counts indicate records present in the dataset, not verified current tick prevalence or an individual's risk of tick exposure.
+
+**Anomaly detection:** The model compares monthly counts without explicitly accounting for seasonality or months with no recorded sightings. Its output should not be treated as a current tick-risk assessment.
+
+**Future development:** Potential improvements include scheduled synchronisation, more comprehensive observability and geographic visualisation.
