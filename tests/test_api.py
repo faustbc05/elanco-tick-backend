@@ -1,6 +1,7 @@
 import database
 from fastapi.testclient import TestClient
 from main import app
+import main
 import pytest
 
 
@@ -151,3 +152,24 @@ def test_sync_failure_preserves_data(tmp_path, monkeypatch):
     result = cursor.fetchone()
     assert result[0] == 1
     connection.close()
+
+
+def test_anomaly_endpoint(tmp_path, monkeypatch):
+    monkeypatch.setattr(database, "DB_PATH", tmp_path / "sightings.db")
+
+    monthly_data = [
+        {"month": f"2023-{month:02d}", "count": 5} for month in range(1, 13)
+    ]
+    monthly_data[6]["count"] = 100
+
+    monkeypatch.setattr(
+        main,
+        "get_monthly_trends",
+        lambda: monthly_data,
+    )
+
+    with TestClient(app) as client:
+        response = client.get("/analytics/insights/anomalies")
+
+        assert response.status_code == 200
+        assert response.json() == [{"month": "2023-07", "count": 100}]

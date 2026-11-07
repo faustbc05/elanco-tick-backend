@@ -8,14 +8,16 @@ The system separates data ingestion from API request handling so that stored sig
 
 ## Application Components
 
-| Component | Responsibility |
-|---|---|
-| `fetch_data.py` | Retrieves data from Elanco's API, using an HTTP timeout and handling common network and response errors |
-| `validation.py` | Validates required sighting fields and timestamp formats |
-| `database.py` | Initialises SQLite, synchronises sightings, performs parameterised queries and calculates analytics |
-| `regions.py` | Maps known UK locations to regions |
-| `main.py` | Exposes FastAPI endpoints and validates incoming request parameters |
-| `tests/test_api.py` | Tests API behaviour, startup, analytics, invalid requests and data preservation during outages |
+| Component                | Responsibility                                                                                          |
+| ------------------------ | ------------------------------------------------------------------------------------------------------- |
+| `fetch_data.py`          | Retrieves data from Elanco's API, using an HTTP timeout and handling common network and response errors |
+| `validation.py`          | Validates required sighting fields and timestamp formats                                                |
+| `database.py`            | Initialises SQLite, synchronises sightings, performs parameterised queries and calculates analytics     |
+| `regions.py`             | Maps known UK locations to regions                                                                      |
+| `main.py`                | Exposes FastAPI endpoints and validates incoming request parameters                                     |
+| `insights.py`            | Uses scikit-learn Isolation Forest to identify unusual monthly sighting counts                          |
+| `tests/test_api.py`      | Tests API behaviour, startup, analytics, invalid requests and data preservation during outages          |
+| `tests/test_insights.py` | Tests anomaly detection using controlled monthly data                                                   |
 
 ## Data Ingestion
 
@@ -31,6 +33,8 @@ Sighting searches use parameterised SQL queries to apply location, date and pagi
 
 Results are returned as JSON. The application does not need to contact Elanco's external API for each read request.
 
+For the anomaly endpoint, `main.py` obtains monthly counts from `database.py` and passes them to `insights.py`. Isolation Forest flags unusual observations, which are returned as JSON.
+
 ## Reliability
 
 The backend includes HTTP timeout handling, data validation, transaction rollback and database connection cleanup.
@@ -45,10 +49,14 @@ SQLite was chosen to keep the assessment self-contained and easy to install with
 
 Python provides a common language across ingestion, validation, persistence, analytics and automated testing.
 
+scikit-learn provides an Isolation Forest implementation for exploratory detection of anomalous monthly counts.
+
 ## Trade-offs and Future Improvements
 
 The current design prioritises simplicity, reproducibility and reliable data processing.
 
 Potential improvements include scheduled synchronisation, database indexes, more flexible geographical mapping, improved operational monitoring, and migration to a server-based database for greater concurrency.
+
+The anomaly model does not explicitly account for seasonality or months without recorded sightings and should not be used to infer current tick risk.
 
 Historical sighting counts should not be interpreted as verified current disease-risk predictions.

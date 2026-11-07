@@ -7,6 +7,7 @@ from database import (
     get_monthly_trends,
     initialise_database,
 )
+from insights import detect_monthly_anomalies
 from datetime import date
 from contextlib import asynccontextmanager
 
@@ -63,3 +64,9 @@ def analytics_trends_weekly():
 def analytics_trends_monthly():
     result = get_monthly_trends()
     return result
+
+
+@app.get("/analytics/insights/anomalies")
+def analytics_insights_anomalies():
+    monthly_data = get_monthly_trends()
+    return detect_monthly_anomalies(monthly_data)
