@@ -2,6 +2,7 @@ import sqlite3
 from pathlib import Path
 from validation import is_valid_sighting
 from fetch_data import fetch_sightings
+from regions import CITY_TO_REGION
 
 DB_PATH = Path(__file__).parent / "data" / "sightings.db"
 
@@ -97,6 +98,85 @@ def get_sightings_page(limit, offset, location=None, start_date=None, end_date=N
     params.extend([limit, offset])
 
     cursor = connection.execute(query, params)
+
+    rows = cursor.fetchall()
+    result = []
+    for row in rows:
+        result.append(dict(row))
+
+    connection.close()
+    return result
+
+
+def get_location_counts():
+    connection = get_connection()
+    connection.row_factory = sqlite3.Row
+
+    cursor = connection.execute("""
+    SELECT location, COUNT(*) as count
+    FROM sightings
+    GROUP BY location
+    ORDER BY count DESC, location ASC
+    """)
+
+    rows = cursor.fetchall()
+    result = []
+    for row in rows:
+        result.append(dict(row))
+
+    connection.close()
+    return result
+
+
+def get_region_counts():
+    location_counts = get_location_counts()
+    region_totals = {}
+
+    for item in location_counts:
+        city = item["location"]
+        count = item["count"]
+
+        region = CITY_TO_REGION.get(city, "Unknown")
+        region_totals[region] = region_totals.get(region, 0) + count
+
+    result = []
+    for region, count in region_totals.items():
+        result.append({"region": region, "count": count})
+
+    result.sort(key=lambda item: (-item["count"], item["region"]))
+    return result
+
+
+def get_weekly_trends():
+    connection = get_connection()
+    connection.row_factory = sqlite3.Row
+
+    cursor = connection.execute("""
+    SELECT date(date, 'weekday 0', '-6 days') AS week_start, COUNT(*) AS count
+    FROM sightings
+    GROUP BY week_start
+    ORDER BY week_start ASC
+    """)
+
+    rows = cursor.fetchall()
+    result = []
+    for row in rows:
+        result.append(dict(row))
+
+    connection.close()
+    return result
+
+
+def get_monthly_trends():
+    connection = get_connection()
+    connection.row_factory = sqlite3.Row
+
+    cursor = connection.execute("""
+    SELECT strftime('%Y-%m', date) AS month, COUNT(*) AS count
+    FROM sightings
+    GROUP BY month
+    ORDER BY month ASC
+    """)
 
     rows = cursor.fetchall()
     result = []

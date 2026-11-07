@@ -1,0 +1,16 @@
+CITY_TO_REGION = {
+    "Birmingham": "West Midlands",
+    "Bristol": "South West",
+    "Cardiff": "Wales",
+    "Edinburgh": "Scotland",
+    "Glasgow": "Scotland",
+    "Leeds": "Yorkshire and the Humber",
+    "Leicester": "East Midlands",
+    "Liverpool": "North West",
+    "London": "London",
+    "Manchester": "North West",
+    "Newcastle": "North East",
+    "Nottingham": "East Midlands",
+    "Sheffield": "Yorkshire and the Humber",
+    "Southampton": "South East",
+}

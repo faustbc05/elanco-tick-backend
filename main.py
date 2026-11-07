@@ -1,5 +1,11 @@
 from fastapi import FastAPI, Query, HTTPException
-from database import get_sightings_page
+from database import (
+    get_sightings_page,
+    get_location_counts,
+    get_region_counts,
+    get_weekly_trends,
+    get_monthly_trends,
+)
 from datetime import date
 
 app = FastAPI()
@@ -23,4 +29,28 @@ def sightings(
             status_code=422, detail="Start date cannot be later than end date"
         )
     result = get_sightings_page(limit, offset, location, start_date, end_date)
+    return result
+
+
+@app.get("/analytics/locations")
+def analytics_locations():
+    result = get_location_counts()
+    return result
+
+
+@app.get("/analytics/regions")
+def analytics_regions():
+    result = get_region_counts()
+    return result
+
+
+@app.get("/analytics/trends/weekly")
+def analytics_trends_weekly():
+    result = get_weekly_trends()
+    return result
+
+
+@app.get("/analytics/trends/monthly")
+def analytics_trends_monthly():
+    result = get_monthly_trends()
     return result
