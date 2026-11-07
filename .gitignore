@@ -18,3 +18,8 @@ __pycache__/
 # Testing and tooling
 .pytest_cache/
 .coverage
+
+# Local downloaded API data and exploratory snapshots
+data/*.json
+stats.json
+tick-sightings.json
